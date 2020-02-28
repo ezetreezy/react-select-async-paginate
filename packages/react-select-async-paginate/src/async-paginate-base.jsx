@@ -10,48 +10,45 @@ import wrapMenuList from './wrap-menu-list';
 
 export const MenuList = wrapMenuList(defaultComponents.MenuList);
 
-const sleep = (ms) => new Promise((resolve) => {
-  setTimeout(() => {
-    resolve();
-  }, ms);
-});
+const sleep = ms =>
+  new Promise(resolve => {
+    setTimeout(() => {
+      resolve();
+    }, ms);
+  });
 
 class AsyncPaginateBase extends Component {
   constructor(props) {
     super(props);
 
-    const {
-      options,
-      defaultOptions,
-    } = props;
+    const { options, defaultOptions } = props;
 
-    const initialOptions = defaultOptions === true
-      ? null
-      : (defaultOptions instanceof Array)
+    const initialOptions =
+      defaultOptions === true
+        ? null
+        : defaultOptions instanceof Array
         ? defaultOptions
         : options;
 
     const initialOptionsCache = initialOptions
       ? {
-        '': {
-          isFirstLoad: false,
-          isLoading: false,
-          options: initialOptions,
-          hasMore: true,
-          additional: props.additional,
-        },
-      }
+          '': {
+            isFirstLoad: false,
+            isLoading: false,
+            options: initialOptions,
+            hasMore: true,
+            additional: props.additional
+          }
+        }
       : {};
 
     this.state = {
-      optionsCache: initialOptionsCache,
+      optionsCache: initialOptionsCache
     };
   }
 
   async componentDidMount() {
-    const {
-      defaultOptions,
-    } = this.props;
+    const { defaultOptions } = this.props;
 
     if (defaultOptions === true) {
       await this.loadOptions();
@@ -59,16 +56,11 @@ class AsyncPaginateBase extends Component {
   }
 
   async componentDidUpdate(oldProps) {
-    const {
-      cacheUniq,
-      defaultOptions,
-      inputValue,
-      menuIsOpen,
-    } = this.props;
+    const { cacheUniq, defaultOptions, inputValue, menuIsOpen } = this.props;
 
     if (oldProps.cacheUniq !== cacheUniq) {
       await this.setState({
-        optionsCache: {},
+        optionsCache: {}
       });
       if (defaultOptions === true) {
         await this.loadOptions();
@@ -85,9 +77,7 @@ class AsyncPaginateBase extends Component {
   }
 
   async onMenuOpen() {
-    const {
-      optionsCache,
-    } = this.state;
+    const { optionsCache } = this.state;
 
     if (!optionsCache['']) {
       await this.loadOptions();
@@ -95,38 +85,30 @@ class AsyncPaginateBase extends Component {
   }
 
   getInitialCache() {
-    const {
-      additional,
-    } = this.props;
+    const { additional } = this.props;
 
     return {
       isFirstLoad: true,
       options: [],
       hasMore: true,
       isLoading: false,
-      additional,
+      additional
     };
   }
 
   handleScrolledToBottom = async () => {
-    const {
-      inputValue,
-    } = this.props;
-    const {
-      optionsCache,
-    } = this.state;
+    const { inputValue } = this.props;
+    const { optionsCache } = this.state;
 
     const currentOptions = optionsCache[inputValue];
 
     if (currentOptions) {
       await this.loadOptions();
     }
-  }
+  };
 
   async handleInputChange(search) {
-    const {
-      optionsCache,
-    } = this.state;
+    const { optionsCache } = this.state;
 
     if (!optionsCache[search]) {
       await this.loadOptions();
@@ -134,12 +116,8 @@ class AsyncPaginateBase extends Component {
   }
 
   async loadOptions() {
-    const {
-      inputValue,
-    } = this.props;
-    const {
-      optionsCache,
-    } = this.state;
+    const { inputValue } = this.props;
+    const { optionsCache } = this.state;
 
     const currentOptions = optionsCache[inputValue] || this.getInitialCache();
 
@@ -147,36 +125,32 @@ class AsyncPaginateBase extends Component {
       return;
     }
 
-    await this.setState((prevState) => ({
+    await this.setState(prevState => ({
       optionsCache: {
         ...prevState.optionsCache,
         [inputValue]: {
           ...currentOptions,
-          isLoading: true,
-        },
-      },
+          isLoading: true
+        }
+      }
     }));
 
-    const {
-      debounceTimeout,
-    } = this.props;
+    const { debounceTimeout } = this.props;
 
     if (debounceTimeout > 0) {
       await sleep(debounceTimeout);
 
-      const {
-        inputValue: newInputValue,
-      } = this.props;
+      const { inputValue: newInputValue } = this.props;
 
       if (inputValue !== newInputValue) {
-        await this.setState((prevState) => ({
+        await this.setState(prevState => ({
           optionsCache: {
             ...prevState.optionsCache,
             [inputValue]: {
               ...prevState.optionsCache[inputValue],
-              isLoading: false,
-            },
-          },
+              isLoading: false
+            }
+          }
         }));
 
         return;
@@ -189,14 +163,12 @@ class AsyncPaginateBase extends Component {
     let hasMore;
 
     try {
-      const {
-        loadOptions,
-      } = this.props;
+      const { loadOptions } = this.props;
 
       const response = await loadOptions(
         inputValue,
         currentOptions.options,
-        currentOptions.additional,
+        currentOptions.additional
       );
 
       ({ options, hasMore, additional } = response);
@@ -207,34 +179,37 @@ class AsyncPaginateBase extends Component {
     }
 
     if (hasError) {
-      await this.setState((prevState) => ({
+      await this.setState(prevState => ({
         optionsCache: {
           ...prevState.optionsCache,
           [inputValue]: {
             ...currentOptions,
-            isLoading: false,
-          },
-        },
+            isLoading: false
+          }
+        }
       }));
     } else {
-      const newAdditional = typeof additional === 'undefined' ? null : additional;
+      const newAdditional =
+        typeof additional === 'undefined' ? null : additional;
 
-      const {
-        reduceOptions,
-      } = this.props;
+      const { reduceOptions } = this.props;
 
-      await this.setState((prevState) => ({
+      await this.setState(prevState => ({
         optionsCache: {
           ...prevState.optionsCache,
           [inputValue]: {
             ...currentOptions,
-            options: reduceOptions(currentOptions.options, options, newAdditional),
+            options: reduceOptions(
+              currentOptions.options,
+              options,
+              newAdditional
+            ),
             hasMore: !!hasMore,
             isLoading: false,
             isFirstLoad: false,
-            additional: newAdditional,
-          },
-        },
+            additional: newAdditional
+          }
+        }
       }));
     }
   }
@@ -248,9 +223,7 @@ class AsyncPaginateBase extends Component {
       ...props
     } = this.props;
 
-    const {
-      optionsCache,
-    } = this.state;
+    const { optionsCache } = this.state;
 
     const currentOptions = optionsCache[inputValue] || this.getInitialCache();
 
@@ -265,7 +238,7 @@ class AsyncPaginateBase extends Component {
         options={currentOptions.options}
         components={{
           MenuList,
-          ...components,
+          ...components
         }}
         ref={selectRef}
       />
@@ -283,7 +256,7 @@ AsyncPaginateBase.propTypes = {
   options: PropTypes.arrayOf(PropTypes.object),
   defaultOptions: PropTypes.oneOfType([
     PropTypes.bool,
-    PropTypes.arrayOf(PropTypes.object),
+    PropTypes.arrayOf(PropTypes.object)
   ]),
 
   // eslint-disable-next-line react/forbid-prop-types
@@ -299,7 +272,7 @@ AsyncPaginateBase.propTypes = {
   // eslint-disable-next-line react/forbid-prop-types
   cacheUniq: PropTypes.any,
 
-  selectRef: PropTypes.func,
+  selectRef: PropTypes.oneOfType([PropTypes.func, PropTypes.object])
 };
 
 AsyncPaginateBase.defaultProps = {
@@ -317,7 +290,7 @@ AsyncPaginateBase.defaultProps = {
 
   cacheUniq: null,
 
-  selectRef: null,
+  selectRef: null
 };
 
 export default AsyncPaginateBase;
